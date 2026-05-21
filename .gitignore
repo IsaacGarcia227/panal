@@ -25,6 +25,5 @@ bee-smart-iot/flask.log
 .idea/dataSources/
 .idea/dataSources.local.xml
 
-# Claude Code settings (pueden contener API keys)
-.claude/settings.json
-.claude/settings.local.json
+# Claude Code (todo)
+.claude/
