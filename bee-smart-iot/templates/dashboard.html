@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bee-Smart · Ensenada BC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🐝</span>
+      <div>
+        <h1>Bee-Smart IoT</h1>
+        <p class="subtitle">Colmena · Ensenada, Baja California</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="freshness" id="freshness">
+        <span class="freshness-dot"></span>
+        <span class="freshness-text">—</span>
+      </div>
+      <div class="badge" id="health-badge">
+        <span class="dot"></span>
+        <span class="label">cargando…</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <article class="card gauge-card gauge-card--large">
+        <h2>Peso actual</h2>
+        <div class="gauge" id="gauge-weight">
+          <div class="gauge-value gauge-value--large"><span id="weight-value">--</span><small>kg</small></div>
+          <div class="gauge-track"><div class="gauge-fill" id="weight-fill"></div></div>
+          <p class="hint">Meta de cosecha: {{ goal_kg }} kg</p>
+        </div>
+      </article>
+
+      <article class="card forecast-card">
+        <h2>Pronóstico de cosecha</h2>
+        <p class="forecast-main" id="forecast-days">—</p>
+        <p class="forecast-detail" id="forecast-detail">Regresión lineal sobre 7 días saludables.</p>
+      </article>
+    </section>
+
+    <section class="card trend-card">
+      <header class="trend-header">
+        <h2 id="trend-title">Tendencia</h2>
+        <span class="trend-range" id="trend-range">—</span>
+      </header>
+
+      <div class="preset-bar">
+        <div class="chip-row" role="tablist">
+          <button type="button" class="chip" data-preset="24h">24 h</button>
+          <button type="button" class="chip" data-preset="7d">7 d</button>
+          <button type="button" class="chip" data-preset="30d">30 d</button>
+          <button type="button" class="chip" data-preset="all">Todo</button>
+        </div>
+      </div>
+
+      <div class="chart-wrapper">
+        <canvas id="trend-chart"></canvas>
+      </div>
+    </section>
+
+    <section class="card prob-card">
+      <h2>Diagnóstico Random Forest</h2>
+      <div class="prob-grid" id="prob-grid"></div>
+    </section>
+
+    <section class="card timeline-card">
+      <header class="trend-header">
+        <h2>Eventos detectados</h2>
+        <span class="trend-range" id="timeline-count">—</span>
+      </header>
+      <ol class="timeline" id="timeline"></ol>
+      <p class="hint" id="timeline-empty" hidden>
+        Sin transiciones de estado dentro del rango seleccionado.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Última consulta · <span id="last-update">—</span></p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

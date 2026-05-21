@@ -1,0 +1,73 @@
+
+generation_patterns:
+  default: &default_pattern
+    santa_ana_windows: [[7, 10], [18, 21]]
+    swarm_day: 15
+    drought_start: 24
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "high"
+      humidity_drop: 15
+
+  seasonal_extreme:
+    santa_ana_windows: [[5, 10], [15, 18], [22, 28]]
+    swarm_day: 12
+    drought_start: 20
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "critical"
+      humidity_drop: 25
+
+  swarm_critical:
+    santa_ana_windows: [[6, 8], [14, 16]]
+    swarm_day: 20
+    drought_start: 25
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "high"
+      humidity_drop: 20
+
+  drought_only:
+    santa_ana_windows: []
+    swarm_day: null
+    drought_start: 12
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "low"
+      humidity_drop: 25
+
+  chronology_shift:
+    santa_ana_windows: [[1, 4], [11, 14]]
+    swarm_day: 30
+    drought_start: 5
+    drought_end: 10
+    intensity:
+      temp_fluctuation: "daily"
+      humidity_drop: 5
+
+  combined_crisis:
+    santa_ana_windows: [[7, 10], [12, 14]]
+    swarm_day: 8
+    drought_start: 22
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "maximum"
+      humidity_drop: 30
+
+  stress_full:
+    santa_ana_windows: [[4, 7], [9, 12], [18, 21]]
+    swarm_day: 5
+    drought_start: 10
+    drought_end: 30
+    intensity:
+      temp_fluctuation: "steep"
+      humidity_drop: 22
+
+  weather_only:
+    santa_ana_windows: [[6, 11]]
+    swarm_day: null
+    drought_start: null
+    drought_end: null
+    intensity:
+      temp_fluctuation: "normal"
+      humidity_drop: 10

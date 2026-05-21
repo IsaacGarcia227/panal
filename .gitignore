@@ -1,0 +1,30 @@
+# Credenciales del firmware (WiFi + URL del túnel)
+firmware/config.h
+
+# Entorno virtual Python
+bee-smart-iot/.venv/
+
+# Bytecode Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de datos generados
+bee-smart-iot/bee_history.csv
+bee-smart-iot/bee_model.joblib
+server/datos.csv
+
+# Logs
+*.log
+bee-smart-iot/flask.log
+
+# IDE JetBrains (excepto el .gitignore interno de .idea)
+.idea/workspace.xml
+.idea/shelf/
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+
+# Claude Code settings (pueden contener API keys)
+.claude/settings.json
+.claude/settings.local.json
