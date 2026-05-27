@@ -219,7 +219,7 @@ def generate_history(
             )
             label = LABEL_ENJAMBRAZON
         elif _SWARM_HOUR + pre_window < h < _SWARM_RECOVERY_END:
-            temp_int = 36.0 + random.gauss(0, SIMULATION.swarm_temp_noise_c)
+            temp_int = BIOLOGY.nido_setpoint_c + 2.0 + random.gauss(0, SIMULATION.swarm_temp_noise_c)
 
         # ---- Mass-balance de forrajeo / sequía ------------------------
         if not _in_window(h, _LOW_RESERVES_WINDOW):
@@ -231,7 +231,7 @@ def generate_history(
             if h - _LOW_RESERVES_WINDOW[0] > SIMULATION.low_reserves_grace_hours:
                 label = LABEL_RESERVAS_BAJAS
 
-        weight = max(weight, SIMULATION.min_weight_kg)
+        weight = max(SIMULATION.min_weight_kg, min(weight, BIOLOGY.harvest_goal_kg))
 
         yield HourReading(
             timestamp=ts.strftime("%Y-%m-%d %H:%M:%S"),

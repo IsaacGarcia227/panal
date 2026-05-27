@@ -211,8 +211,9 @@ def parse_window(
         raise FilterError(f"unknown preset {preset!r}; valid: {valid}")
 
     hours = SERVER.preset_map[preset]
+    now = datetime.now()
     return TimeWindow(
-        start=dataset_end - timedelta(hours=hours), end=dataset_end, label=preset
+        start=now - timedelta(hours=hours), end=now, label=preset
     )
 
 
@@ -278,9 +279,9 @@ class HiveDataset:
             return self._df.loc[mask].copy()
 
     def append_new_from_csv(self, csv_path) -> int:
-        """Lee el CSV en disco y agrega solo filas más nuevas que el fin actual.
+        """Recarga el CSV completo y actualiza el dataset en memoria.
 
-        Devuelve cuántas filas se agregaron (0 = nada nuevo).
+        Devuelve cuántas filas nuevas se agregaron (0 = sin cambios).
         """
         df = pd.read_csv(csv_path)
         df["timestamp"] = pd.to_datetime(df["timestamp"], format="mixed")
@@ -290,18 +291,9 @@ class HiveDataset:
         df = df.sort_values("timestamp").reset_index(drop=True)
 
         with self._lock:
-            if len(self._df) == 0:
-                return 0
-            cutoff = self._df["timestamp"].iloc[-1]
-            new_rows = df[df["timestamp"] > cutoff]
-            if new_rows.empty:
-                return 0
-            self._df = (
-                pd.concat([self._df, new_rows], ignore_index=True)
-                .sort_values("timestamp")
-                .reset_index(drop=True)
-            )
-            return len(new_rows)
+            old_count = len(self._df)
+            self._df = df
+            return max(0, len(df) - old_count)
 
     def snapshot(self) -> pd.DataFrame:
         """Copia thread-safe del DataFrame completo."""
@@ -604,7 +596,7 @@ def create_app() -> Flask:
         )
     bundle = joblib.load(SERVER.model_path)
     dataset = HiveDataset(SERVER.csv_path)
-    _start_csv_watcher(app, dataset, bundle)
+    _start_csv_watcher(app, dataset, bundle, interval=5)
 
     # ---- error handlers --------------------------------------------------
     @app.errorhandler(SensorError)
@@ -669,6 +661,10 @@ def create_app() -> Flask:
         win = parse_window(request.args, dataset.end, dataset.start)
         sliced = dataset.slice(win)
         rows = _df_to_rows(sliced)
+        now_ts = datetime.now()
+        now_str = now_ts.strftime("%Y-%m-%d %H:%M:%S")
+        past_rows = [r for r in rows if r["timestamp"] <= now_str]
+        latest_row = (past_rows if past_rows else rows)[-1]
         if len(rows) > MAX_CHART_POINTS:
             step = max(1, len(rows) // MAX_CHART_POINTS)
             rows = rows[::step]
@@ -688,7 +684,7 @@ def create_app() -> Flask:
                 404,
             )
 
-        last_ts = sliced["timestamp"].iloc[-1].to_pydatetime()
+        last_ts = min(sliced["timestamp"].iloc[-1].to_pydatetime(), now_ts)
         rolling = _df_to_rows(
             dataset.trailing_hours(last_ts, hours=MODEL.rolling_prediction_hours)
         )
@@ -709,7 +705,7 @@ def create_app() -> Flask:
                     "label": win.label,
                 },
                 "history": rows,
-                "latest": rows[-1],
+                "latest": latest_row,
                 "health": health,
                 "forecast": forecast,
                 "timeline": timeline,
@@ -736,6 +732,13 @@ def create_app() -> Flask:
             4. Se devuelve diagnóstico actualizado.
         """
         payload = request.get_json(silent=True)
+        ip = request.remote_addr
+        app.logger.warning(
+            "[POST /api/reading] desde %s | peso=%s | temp=%s",
+            ip,
+            payload.get("peso") if payload else "?",
+            payload.get("temperatura") if payload else "?",
+        )
         if payload is None:
             raise SensorError("body is not valid JSON")
         frame = parse_frame(payload)

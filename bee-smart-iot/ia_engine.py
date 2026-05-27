@@ -150,7 +150,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     serie reciben 0.0 (valor neutral: no hay historia con la cual comparar).
     """
     out = df.copy()
-    out["timestamp"] = pd.to_datetime(out["timestamp"])
+    out["timestamp"] = pd.to_datetime(out["timestamp"], format="mixed")
     out = out.sort_values("timestamp").reset_index(drop=True)
     out = _coerce_numeric(out)
 

@@ -1,6 +1,17 @@
 (() => {
   "use strict";
 
+  const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
+  function fmtTs(ts) {
+    if (!ts) return "—";
+    const norm = ts.replace("T", " ");
+    const dd   = norm.slice(8, 10);
+    const mon  = parseInt(norm.slice(5, 7), 10) - 1;
+    const hhmm = norm.slice(11, 16);
+    return `${dd} ${MESES[mon]} ${hhmm}`;
+  }
+
   const LABEL_TO_STATE = {
     SANA: { cls: "ok", text: "Colmena sana" },
     ENJAMBRAZON: { cls: "alert", text: "¡Enjambrazón detectada!" },
@@ -98,11 +109,11 @@ const chart = new Chart(document.getElementById("trend-chart"), {
   // Biological thresholds — populated from /api/meta. Fallbacks aquí solo
   // cubren el caso de que el frontend cargue antes de tener metadata.
   let biology = {
-    setpoint_c: 35,
-    stress_temp_c: 37,
+    setpoint_c: 33,
+    stress_temp_c: 30,
     harvest_goal_kg: 40,
-    gauge_temp_min_c: 33,
-    gauge_temp_max_c: 39,
+    gauge_temp_min_c: 24,
+    gauge_temp_max_c: 32,
   };
 
   function setActivePreset(name) {
@@ -165,10 +176,7 @@ const chart = new Chart(document.getElementById("trend-chart"), {
       els.freshnessText.textContent = "—";
       return;
     }
-    const dd = lastTs.slice(8, 10);
-    const mm = lastTs.slice(5, 7);
-    const hhmm = lastTs.slice(11, 16);
-    els.freshnessText.textContent = `Actualizados hasta ${dd}-${mm} ${hhmm}`;
+    els.freshnessText.textContent = `Actualizados hasta ${fmtTs(lastTs)}`;
   }
 
   function paintTimeline(events) {
@@ -187,7 +195,7 @@ const chart = new Chart(document.getElementById("trend-chart"), {
       const li = document.createElement("li");
       li.className = `to-${ev.to}`;
       li.innerHTML = `
-        <span class="timeline-time">${ev.timestamp.slice(5, 16)}</span>
+        <span class="timeline-time">${fmtTs(ev.timestamp)}</span>
         <span class="timeline-transition">
           <span class="timeline-from">${ev.from.replace("_", " ")}</span>
           <span class="timeline-arrow">→</span>
@@ -230,12 +238,12 @@ const chart = new Chart(document.getElementById("trend-chart"), {
   }
 
   function tickLabel(tsStr, spanHours) {
-    // tsStr looks like "2026-05-14 13:00:00".
-    const dd = tsStr.slice(8, 10);
-    const mm = tsStr.slice(5, 7);
-    const hhmm = tsStr.slice(11, 16);
-    if (spanHours <= 24 * 14) return `${dd}-${mm} ${hhmm}`;    // DD-MM HH:MM
-    return `${dd}-${mm}`;                                        // DD-MM
+    const norm = tsStr.replace("T", " ");
+    const dd   = norm.slice(8, 10);
+    const mon  = parseInt(norm.slice(5, 7), 10) - 1;
+    const hhmm = norm.slice(11, 16);
+    if (spanHours <= 24 * 14) return `${dd} ${MESES[mon]} ${hhmm}`;
+    return `${dd} ${MESES[mon]}`;
   }
 
   function paintChart(history, win, events) {
@@ -269,7 +277,8 @@ const chart = new Chart(document.getElementById("trend-chart"), {
   function paintTrendHeader(win) {
     const fmt = (iso) => iso.replace("T", " ").slice(0, 16);
     let title = "Tendencia";
-    if (win.label === "24h") title = "Tendencia últimas 24 h";
+    if (win.label === "5min") title = "Tendencia últimos 5 minutos";
+    else if (win.label === "24h") title = "Tendencia últimas 24 h";
     else if (win.label === "7d") title = "Tendencia últimos 7 días";
     else if (win.label === "30d") title = "Tendencia últimos 30 días";
     else if (win.label === "all") title = "Tendencia · dataset completo";
@@ -336,7 +345,7 @@ const chart = new Chart(document.getElementById("trend-chart"), {
     setActivePreset("24h");
     applyFilters();
 
-    // Auto-refresh cada 15 s — coincide con el intervalo de envío del ESP32
-    setInterval(() => applyFilters(), 15000);
+    // Auto-refresh cada 5 s
+    setInterval(() => applyFilters(), 5000);
   })();
 })();

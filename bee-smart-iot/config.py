@@ -69,18 +69,18 @@ class HardwareConfig:
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class BiologyConfig:
-    nido_setpoint_c: float = 35.0          # temperatura objetivo del nido de cría
+    nido_setpoint_c: float = 27.0          # temperatura ambiente del sensor (demo académico)
     harvest_goal_kg: float = 40.0          # masa total al iniciar cosecha
 
     # Umbrales usados tanto por el labeller sintético como por el dashboard
     # (gauge de temperatura, badges, etc.).
-    stress_temp_c: float = 37.0            # sostenido => ESTRES_TERMICO
+    stress_temp_c: float = 30.0            # sostenido => ESTRES_TERMICO
     swarm_min_loss_kg: float = 3.0         # caída en <1h => ENJAMBRAZON
     low_reserves_days: int = 7             # pérdida sostenida => RESERVAS_BAJAS
 
     # Ventanas visuales del gauge de temperatura en el dashboard.
-    gauge_temp_min_c: float = 33.0
-    gauge_temp_max_c: float = 39.0
+    gauge_temp_min_c: float = 24.0
+    gauge_temp_max_c: float = 32.0
 
 
 # ---------------------------------------------------------------------------
@@ -88,68 +88,66 @@ class BiologyConfig:
 # ---------------------------------------------------------------------------
 @dataclass(frozen=True)
 class SimulationConfig:
-    days: int = 30
+    days: int = 182
     seed: int = 42
 
-    # Anclaje temporal arbitrario para que el CSV sea reproducible.
-    anchor_year: int = 2026
-    anchor_month: int = 4
-    anchor_day: int = 21
+    # Anclaje temporal: 22 nov 2025 → 182 días terminan el 22 may 2026 (hoy).
+    anchor_year: int = 2025
+    anchor_month: int = 11
+    anchor_day: int = 22
 
     # Pesos iniciales y comportamiento de forrajeo.
-    # El flujo diurno = `daytime_base_kg` + gauss(jitter_mean, jitter_std).
-    # Con los defaults: ~0.05 + N(0.04, 0.02) ≈ 0.09 kg/h promedio diurno.
-    start_weight_kg: float = 25.0
-    daytime_base_kg: float = 0.05
-    daytime_jitter_mean_kg: float = 0.04
-    daytime_jitter_std_kg: float = 0.02
-    nighttime_loss_mean_kg: float = -0.005
-    nighttime_loss_std_kg: float = 0.004
+    start_weight_kg: float = 18.0
+    daytime_base_kg: float = 0.02
+    daytime_jitter_mean_kg: float = 0.05
+    daytime_jitter_std_kg: float = 0.03
+    nighttime_loss_mean_kg: float = -0.006
+    nighttime_loss_std_kg: float = 0.005
 
-    # Termorregulación normal (oscilación diurna alrededor del set-point).
-    diurnal_temp_amp_c: float = 0.8
-    diurnal_temp_noise_c: float = 0.15
+    # Termorregulación normal — centrada en temperatura ambiente ~27°C.
+    diurnal_temp_amp_c: float = 1.0
+    diurnal_temp_noise_c: float = 0.2
 
-    # Humedad ambiente costera Ensenada.
-    base_humidity_pct: float = 65.0
-    diurnal_humidity_amp_pct: float = 25.0
-    humidity_noise_pct: float = 3.0
+    # Humedad costera Ensenada.
+    base_humidity_pct: float = 62.0
+    diurnal_humidity_amp_pct: float = 28.0
+    humidity_noise_pct: float = 4.0
 
     # Presión atmosférica.
     base_pressure_hpa: float = 1_013.0
-    pressure_monthly_amp_hpa: float = 3.0
-    pressure_noise_hpa: float = 0.4
+    pressure_monthly_amp_hpa: float = 4.5
+    pressure_noise_hpa: float = 0.5
 
-    # Evento Santa Ana (vientos cálidos secos de offshore).
-    # Ventanas de evento pueden ser múltiples. Cada tupla (start_day, end_day) usa días relativos al ancla.
-    santa_ana_windows: tuple[tuple[int, int], ...] = ((7, 10),)  # por defecto una ventana
-    # Se mantiene la compatibilidad con los campos antiguos (solo el primero).
-    santa_ana_start_day: int = 7  # primera ventana start (para código legado)
-    santa_ana_end_day: int = 10   # primera ventana end (para código legado)
-    santa_ana_peak_temp_offset_c: float = 3.5
-    santa_ana_min_humidity_pct: float = 4.0
-    santa_ana_humidity_drop_pct: float = 4.0
-    santa_ana_pressure_drop_hpa: float = 2.5
-    santa_ana_temp_noise_c: float = 0.25
-    santa_ana_humidity_noise_pct: float = 1.2
+    # Dos eventos Santa Ana (ESTRES_TERMICO):
+    #   1º — días 30-35  (22-27 dic 2025): ola de calor invernal
+    #   2º — días 100-106 (2-8 mar 2026):  ola de calor primaveral
+    santa_ana_windows: tuple[tuple[int, int], ...] = ((30, 35), (100, 106))
+    santa_ana_start_day: int = 30
+    santa_ana_end_day: int = 35
+    santa_ana_peak_temp_offset_c: float = 3.0
+    santa_ana_min_humidity_pct: float = 3.0
+    santa_ana_humidity_drop_pct: float = 5.0
+    santa_ana_pressure_drop_hpa: float = 2.8
+    santa_ana_temp_noise_c: float = 0.3
+    santa_ana_humidity_noise_pct: float = 1.5
 
-    # Evento de enjambrazón.
-    swarm_day: int = 15
-    swarm_hour: int = 13
-    swarm_pre_post_window_h: int = 3       # horas etiquetadas antes/después
-    swarm_recovery_h: int = 24             # ventana de termoestabilización
-    swarm_loss_kg: float = 3.6             # pérdida brusca al partir la reina
-    swarm_cluster_temp_c: float = 37.6     # cluster restante calentando
-    swarm_pre_temp_c: float = 36.4
-    swarm_post_temp_c: float = 37.1
+    # Enjambrazón (ENJAMBRAZON) — día 65, hora 11 (26 ene 2026, pico primaveral).
+    swarm_day: int = 65
+    swarm_hour: int = 11
+    swarm_pre_post_window_h: int = 4
+    swarm_recovery_h: int = 30
+    swarm_loss_kg: float = 4.1
+    swarm_cluster_temp_c: float = 29.8
+    swarm_pre_temp_c: float = 28.6
+    swarm_post_temp_c: float = 29.2
     swarm_temp_noise_c: float = 0.3
 
-    # Sequía / dearth nectar — produce el patrón RESERVAS_BAJAS.
-    low_reserves_start_day: int = 23
-    low_reserves_end_day: int = 30
-    drought_daily_loss_kg: float = 0.06
-    drought_loss_jitter_kg: float = 0.03
-    low_reserves_grace_hours: int = 48     # antes de empezar a etiquetar
+    # Sequía (RESERVAS_BAJAS) — días 145-175 (16 abr - 16 may 2026).
+    low_reserves_start_day: int = 145
+    low_reserves_end_day: int = 175
+    drought_daily_loss_kg: float = 0.05
+    drought_loss_jitter_kg: float = 0.04
+    low_reserves_grace_hours: int = 36
 
     # Piso de seguridad para evitar pesos absurdos por ruido encadenado.
     min_weight_kg: float = 5.0
@@ -212,6 +210,7 @@ class ServerConfig:
     )
     # Presets aceptados por `/api/window?preset=...`
     preset_hours: tuple[tuple[str, int], ...] = (
+        ("5min", 5 / 60),
         ("24h", 24),
         ("7d", 24 * 7),
         ("30d", 24 * 30),
